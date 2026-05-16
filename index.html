@@ -29,7 +29,7 @@
             background-color: var(--bg-color);
             color: var(--primary-text);
             margin: 0;
-            padding: 20px 14px; /* 手機端舒適留白 */
+            padding: 20px 14px;
             display: flex;
             justify-content: center;
             -webkit-font-smoothing: antialiased;
@@ -180,13 +180,12 @@
             gap: 16px;
         }
 
-        /* 核心修改：堅持左右雙欄排版 */
         .diary-item {
             background: var(--card-color);
             border-radius: var(--radius-large);
             border: 1px solid transparent;
             display: flex;
-            flex-direction: row; /* 堅持左右雙欄配置 */
+            flex-direction: row; /* 左右雙欄配置 */
             overflow: hidden;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
@@ -196,12 +195,12 @@
             transform: translateY(-2px);
         }
 
-        /* 左側日期欄：針對手機端縮減寬度以免擠壓內容 */
+        /* 左側日期欄 */
         .diary-left {
-            width: 75px; /* 手機端緊湊寬度 */
+            width: 75px; 
             background: #fafafa;
             border-right: 1px solid var(--border-color);
-            padding: 20px 5px;
+            padding: 22px 5px;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -211,7 +210,7 @@
         }
         @media (min-width: 576px) {
             .diary-left {
-                width: 100px; /* 桌機恢復原本寬度 */
+                width: 100px; 
                 padding: 30px 10px;
             }
         }
@@ -226,28 +225,29 @@
 
         /* 右側內容欄 */
         .diary-right {
-            padding: 18px 20px;
+            padding: 20px;
             flex-grow: 1;
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            justify-content: center; /* 讓內容上下居中 */
         }
         @media (min-width: 576px) {
-            .diary-right { padding: 30px; }
+            .diary-right { padding: 25px 30px; }
         }
         
         .diary-title {
             font-size: 16px;
             font-weight: 500;
             color: var(--primary-text);
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         @media (min-width: 576px) {
-            .diary-title { font-size: 17px; margin-bottom: 12px; padding-right: 90px; }
+            .diary-title { font-size: 17px; margin-bottom: 10px; }
         }
         
         .diary-text {
@@ -261,50 +261,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             max-height: 44.8px; 
-            margin-bottom: 10px; /* 為底部按鈕留出間隔 */
         }
-        @media (min-width: 576px) {
-            .diary-text { margin-bottom: 0px; }
-        }
-
-        /* 核心修改：按鈕移至底部，靠右對齊 */
-        .item-actions {
-            display: flex;
-            gap: 20px;
-            background: var(--card-color);
-            justify-content: flex-end; /* 右對齊 */
-            margin-top: auto; /* 推至最底部 */
-            padding-top: 4px;
-        }
-        @media (min-width: 576px) {
-            .item-actions {
-                position: absolute;
-                top: 32px;
-                right: 30px;
-                padding-top: 0;
-                margin-top: 0;
-                padding-left: 10px;
-                z-index: 5;
-            }
-        }
-        
-        .action-link {
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 1px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            text-transform: uppercase;
-            padding: 8px 4px; /* 加大上下點擊熱區，手機極好點 */
-        }
-        @media (min-width: 576px) {
-            .action-link { font-size: 11px; padding: 0; }
-        }
-        .link-edit { color: var(--hint-text); }
-        .link-edit:hover { color: var(--acc-grey); }
-        .link-delete { color: #e57373; }
-        .link-delete:hover { color: #d32f2f; }
 
         /* 彈窗基本樣式 */
         .modal {
@@ -405,6 +362,19 @@
         @media (min-width: 480px) {
             .trash-actions { width: auto; border-top: none; padding-top: 0; }
         }
+        
+        .action-link {
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            text-transform: uppercase;
+            padding: 8px 4px;
+        }
+        .link-delete { color: #e57373; }
+        .link-delete:hover { color: #d32f2f; }
 
         .no-data {
             text-align: center;
@@ -576,6 +546,7 @@
                 return;
             }
 
+            // 核心修改：移除卡片上的 item-actions 區塊，讓整張卡片單純做為觸發閱讀彈窗的載體
             diaryListContainer.innerHTML = filteredDiaries.map(diary => {
                 const lines = diary.content.split('\n');
                 const title = lines[0];
@@ -592,10 +563,6 @@
                         <div class="diary-right">
                             <div class="diary-title">${escapeHTML(title)}</div>
                             <div class="diary-text">${escapeHTML(restContent)}</div>
-                            <div class="item-actions">
-                                <button class="action-link link-edit" onclick="triggerCardEdit(${diary.id}, event)">EDIT</button>
-                                <button class="action-link link-delete" onclick="triggerCardDelete(${diary.id}, event)">DEL</button>
-                            </div>
                         </div>
                     </div>
                 `;
@@ -636,8 +603,8 @@
                                 <div class="trash-date">${item.date}</div>
                             </div>
                             <div class="trash-actions">
-                                <button class="action-link link-edit" style="color:#424242;" onclick="restoreDiary(${item.id})">還原</button>
-                                <button class="action-link link-delete" onclick="deletePermanently(${item.id})">清除</button>
+                                <button class="action-link link-edit" style="color:#424242;" onclick="restoreDiary(${item.id})">RESTORE</button>
+                                <button class="action-link link-delete" onclick="deletePermanently(${item.id})">CLEAR</button>
                             </div>
                         </div>
                     `;
@@ -662,17 +629,6 @@
             document.getElementById('editActions').style.display = 'none';
             document.getElementById('modeView').style.display = 'block';
             document.getElementById('viewActions').style.display = 'flex';
-        }
-
-        function triggerCardEdit(id, event) {
-            event.stopPropagation(); 
-            openDiaryModal(id);
-            switchModalToEdit(); 
-        }
-
-        function triggerCardDelete(id, event) {
-            event.stopPropagation();
-            moveToTrash(id);
         }
 
         function handleModalUpdate() {
