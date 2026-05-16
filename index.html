@@ -428,8 +428,8 @@
                 <textarea id="diaryText" style="height: 250px;" placeholder="Title on the first line...&#10;Content on the next lines."></textarea>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-                <button class="btn btn-sec" onclick="closeModal('writerModal')">CANCEL</button>
-                <button class="btn btn-acc" onclick="saveNewDiary()">SAVE</button>
+                <button class="btn btn-sec" onclick="closeModal('writerModal')">取消</button>
+                <button class="btn btn-acc" onclick="saveNewDiary()">儲存</button>
             </div>
         </div>
     </div>
@@ -454,14 +454,14 @@
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 16px;">
                 <div id="viewActions" style="display: flex; gap: 10px; width: 100%; justify-content: space-between;">
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-sec" onclick="switchModalToEdit()">EDIT</button>
-                        <button class="btn btn-danger" onclick="handleModalDelete()">DELETE</button>
+                        <button class="btn btn-sec" onclick="switchModalToEdit()">編輯</button>
+                        <button class="btn btn-danger" onclick="handleModalDelete()">刪除</button>
                     </div>
-                    <button class="btn btn-acc" onclick="closeModal('diaryModal')">CLOSE</button>
+                    <button class="btn btn-acc" onclick="closeModal('diaryModal')">關閉</button>
                 </div>
                 <div id="editActions" style="display: none; gap: 10px; width: 100%; justify-content: flex-end;">
-                    <button class="btn btn-sec" onclick="switchModalToView()">CANCEL</button>
-                    <button class="btn btn-acc" onclick="handleModalUpdate()">UPDATE</button>
+                    <button class="btn btn-sec" onclick="switchModalToView()">取消</button>
+                    <button class="btn btn-acc" onclick="handleModalUpdate()">更新</button>
                 </div>
             </div>
         </div>
@@ -475,7 +475,7 @@
                 <div id="trashList" class="trash-list"></div>
             </div>
             <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 16px;">
-                <button class="btn btn-acc" onclick="closeModal('trashModal')">CLOSE</button>
+                <button class="btn btn-acc" onclick="closeModal('trashModal')">關閉</button>
             </div>
         </div>
     </div>
@@ -604,8 +604,8 @@
                                 <div class="trash-date">${item.date}</div>
                             </div>
                             <div class="trash-actions">
-                                <button class="action-link link-edit" style="color:#424242;" onclick="restoreDiary(${item.id})">RESTORE</button>
-                                <button class="action-link link-delete" onclick="deletePermanently(${item.id})">CLEAR</button>
+                                <button class="action-link link-edit" style="color:#424242;" onclick="restoreDiary(${item.id})">還原</button>
+                                <button class="action-link link-delete" onclick="deletePermanently(${item.id})">清除</button>
                             </div>
                         </div>
                     `;
