@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MonoDiary - 極簡時光</title>
+
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        /* 極簡灰色調與大圓角設計 */
+        :root {
+            --bg-color: #f4f4f4;        
+            --border-color: #e0e0e0;   
+            --card-color: #ffffff;      
+            --primary-text: #212121;    
+            --secondary-text: #616161;  
+            --hint-text: #9e9e9e;       
+            --acc-grey: #424242;       
+            --acc-grey-hover: #000000;  
+            
+            --radius-large: 24px;
+            --radius-medium: 16px;
+            --radius-small: 8px;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 760px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: var(--acc-grey);
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        /* 內嵌式直接書寫欄位 */
+        .inline-writer {
+            background: var(--card-color);
+            padding: 25px;
+            border-radius: var(--radius-large);
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        
+        .writer-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        
+        .writer-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--acc-grey);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* 工具列與篩選區 */
+        .toolbar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .filter-group, .action-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select, input[type="date"] {
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-color);
+            border-radius: var(--radius-medium);
+            font-size: 13px;
+            color: var(--secondary-text);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        /* 按鈕樣式 */
+        .btn {
+            padding: 10px 24px;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-radius: var(--radius-medium);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        
+        .btn-acc { background: var(--acc-grey); color: white; }
+        .btn-acc:hover { background: var(--acc-grey-hover); }
+        
+        .btn-sec { background: transparent; color: var(--secondary-text); border-color: var(--border-color); }
+        .btn-sec:hover { background: var(--border-color); color: var(--primary-text); }
+        
+        .btn-danger { background: transparent; color: #e57373; border-color: #ffcccc; }
+        .btn-danger:hover { background: #ffebee; color: #d32f2f; }
+
+        textarea {
+            width: 100%;
+            height: 140px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-medium);
+            padding: 18px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--secondary-text);
+            resize: none;
+            box-sizing: border-box;
+            outline: none;
+            background: #fafafa;
+            transition: all 0.2s;
+        }
+        textarea:focus { background: var(--card-color); border-color: var(--acc-grey); }
+
+        /* 日記列表排版 */
+        .diary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .diary-item {
+            background: var(--card-color);
+            border-radius: var(--radius-large);
+            border: 1px solid transparent;
+            display: flex;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .diary-item:hover {
+            border-color: var(--border-color);
+            transform: translateY(-2px);
+        }
+
+        /* 左側日期欄 */
+        .diary-left {
+            width: 100px;
+            background: #fafafa;
+            border-right: 1px solid var(--border-color);
+            padding: 30px 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            flex-shrink: 0;
+        }
+        .diary-item-date { font-size: 22px; font-weight: 300; color: var(--primary-text); }
+        .diary-item-year { font-size: 11px; color: var(--hint-text); margin-top: 5px; letter-spacing: 1px; }
+
+        /* 右側內容欄 */
+        .diary-right {
+            padding: 30px;
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .diary-title {
+            font-size: 17px;
+            font-weight: 500;
+            color: var(--primary-text);
+            margin-bottom: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 90px; /* 留空間給卡片按鈕 */
+        }
+        
+        .diary-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--secondary-text);
+            white-space: pre-wrap;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 44.8px; 
+        }
+
+        /* 卡片右上角操作按鈕群組 */
+        .item-actions {
+            position: absolute;
+            top: 32px;
+            right: 30px;
+            display: flex;
+            gap: 14px;
+            background: var(--card-color);
+            padding-left: 10px;
+            z-index: 5;
+        }
+        .action-link {
+            font-size: 11px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            text-transform: uppercase;
+            padding: 0;
+        }
+        .link-edit { color: var(--hint-text); }
+        .link-edit:hover { color: var(--acc-grey); }
+        .link-delete { color: #e57373; }
+        .link-delete:hover { color: #d32f2f; }
+
+        /* 彈窗基本樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.3);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        .modal-content {
+            background: var(--card-color);
+            padding: 35px;
+            border-radius: var(--radius-large);
+            width: 90%;
+            max-width: 580px;
+            max-height: 80vh;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); } to { transform: translateY(0); } }
+
+        .modal-body {
+            overflow-y: auto;
+            flex-grow: 1;
+            margin-bottom: 25px;
+            padding-right: 5px;
+        }
+
+        .view-date { font-size: 13px; color: var(--hint-text); letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; }
+        .view-title { font-size: 20px; font-weight: 500; color: var(--primary-text); margin-bottom: 20px; line-height: 1.4; }
+        .view-text { font-size: 15px; line-height: 1.8; color: var(--secondary-text); white-space: pre-wrap; }
+
+        .modal-edit-field { display: none; width: 100%; box-sizing: border-box; }
+        .modal-textarea { height: 260px; background: #fafafa; margin-top: 15px; }
+
+        /* 回收桶內部列表樣式 */
+        .trash-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 45vh;
+            overflow-y: auto;
+        }
+        .trash-item {
+            padding: 15px 20px;
+            background: #fafafa;
+            border-radius: var(--radius-medium);
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .trash-info {
+            overflow: hidden;
+            padding-right: 15px;
+        }
+        .trash-title { font-size: 14px; font-weight: 500; color: var(--primary-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .trash-date { font-size: 11px; color: var(--hint-text); margin-top: 2px; }
+
+        .no-data {
+            text-align: center;
+            color: var(--hint-text);
+            font-size: 13px;
+            letter-spacing: 1px;
+            padding: 60px;
+            background: var(--card-color);
+            border-radius: var(--radius-large);
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>MonoDiary</h1>
+        </header>
+
+        <!-- 直接內嵌書寫新日記 -->
+        <div class="inline-writer">
+            <div class="writer-meta">
+                <div class="writer-title">New Entry</div>
+                <input type="date" id="diaryDate">
+            </div>
+            <textarea id="diaryText" placeholder="Title on the first line...&#10;Content on the next lines."></textarea>
+            <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                <button class="btn btn-acc" onclick="saveNewDiary()">Save</button>
+            </div>
+        </div>
+
+        <!-- 總覽與篩選工具列 -->
+        <div class="toolbar">
+            <div class="filter-group">
+                <select id="filterYear" onchange="loadDiaries()">
+                    <option value="all">YEARS</option>
+                </select>
+                <select id="filterMonth" onchange="loadDiaries()">
+                    <option value="all">MONTHS</option>
+                    <option value="01">01</option><option value="02">02</option>
+                    <option value="03">03</option><option value="04">04</option>
+                    <option value="05">05</option><option value="06">06</option>
+                    <option value="07">07</option><option value="08">08</option>
+                    <option value="09">09</option><option value="10">10</option>
+                    <option value="11">11</option><option value="12">12</option>
+                </select>
+            </div>
+            <div class="action-group">
+                <button class="btn btn-sec" onclick="openTrashModal()">TRASH (<span id="trashCount">0</span>)</button>
+                <button class="btn btn-sec" onclick="exportToExcel()">EXPORT</button>
+            </div>
+        </div>
+
+        <!-- 日記列表 -->
+        <div id="diaryList" class="diary-list"></div>
+    </div>
+
+    <!-- 1. 閱讀/編輯日記彈窗 -->
+    <div id="diaryModal" class="modal" onclick="closeModal('diaryModal', event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-body">
+                <!-- 閱讀模式區 -->
+                <div id="modeView">
+                    <div id="viewDate" class="view-date"></div>
+                    <div id="viewTitle" class="view-title"></div>
+                    <div id="viewText" class="view-text"></div>
+                </div>
+                <!-- 編輯模式區 -->
+                <div id="modeEdit" style="display: none;">
+                    <div class="view-date" style="margin-bottom: 5px;">EDIT ENTRY DATE</div>
+                    <input type="date" id="editModalDate" class="modal-edit-field" style="display: block;">
+                    <textarea id="editModalText" class="modal-edit-field modal-textarea" style="display: block;" placeholder="Edit title on the first line..."></textarea>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <div id="viewActions" style="display: flex; gap: 10px; width: 100%; justify-content: space-between;">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-sec" onclick="switchModalToEdit()">EDIT</button>
+                        <button class="btn btn-danger" onclick="handleModalDelete()">DELETE</button>
+                    </div>
+                    <button class="btn btn-acc" onclick="closeModal('diaryModal')">CLOSE</button>
+                </div>
+                <div id="editActions" style="display: none; gap: 10px; width: 100%; justify-content: flex-end;">
+                    <button class="btn btn-sec" onclick="switchModalToView()">CANCEL</button>
+                    <button class="btn btn-acc" onclick="handleModalUpdate()">UPDATE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 回收桶彈窗 -->
+    <div id="trashModal" class="modal" onclick="closeModal('trashModal', event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-body">
+                <div class="view-title" style="margin-bottom: 20px;">Trash Bin</div>
+                <div id="trashList" class="trash-list"></div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                <button class="btn btn-acc" onclick="closeModal('trashModal')">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let targetDiaryId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initYearFilter();
+            resetWriter();
+            loadDiaries();
+            updateTrashCount();
+        });
+
+        function initYearFilter() {
+            const yearSelect = document.getElementById('filterYear');
+            const currentYear = new Date().getFullYear();
+            for (let i = currentYear; i >= currentYear - 3; i--) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i;
+                yearSelect.appendChild(opt);
+            }
+        }
+
+        function resetWriter() {
+            document.getElementById('diaryDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('diaryText').value = '';
+        }
+
+        function updateTrashCount() {
+            const trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
+            document.getElementById('trashCount').textContent = trash.length;
+        }
+
+        // 儲存新日記
+        function saveNewDiary() {
+            const dateVal = document.getElementById('diaryDate').value;
+            const contentVal = document.getElementById('diaryText').value.trim();
+
+            if (!dateVal || !contentVal) {
+                alert('Please write something first.');
+                return;
+            }
+
+            let diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
+            diaries.push({ id: Date.now(), date: dateVal, content: contentVal });
+            diaries.sort((a, b) => new Date(b.date) - new Date(a.date));
+            localStorage.setItem('myDiaries', JSON.stringify(diaries));
+            
+            resetWriter();
+            loadDiaries();
+        }
+
+        // 渲染主日記列表
+        function loadDiaries() {
+            const diaryListContainer = document.getElementById('diaryList');
+            const diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
+            const targetYear = document.getElementById('filterYear').value;
+            const targetMonth = document.getElementById('filterMonth').value;
+
+            const filteredDiaries = diaries.filter(diary => {
+                const d = new Date(diary.date);
+                const yearMatch = (targetYear === 'all') || (d.getFullYear().toString() === targetYear);
+                const monthMatch = (targetMonth === 'all') || ((d.getMonth() + 1).toString().padStart(2, '0') === targetMonth);
+                return yearMatch && monthMatch;
+            });
+
+            if (filteredDiaries.length === 0) {
+                diaryListContainer.innerHTML = '<div class="no-data">EMPTY.</div>';
+                return;
+            }
+
+            diaryListContainer.innerHTML = filteredDiaries.map(diary => {
+                const lines = diary.content.split('\n');
+                const title = lines[0];
+                const restContent = lines.slice(1).join('\n');
+                const dateObj = new Date(diary.date);
+                const monthDay = `${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
+
+                return `
+                    <div class="diary-item" onclick="openDiaryModal(${diary.id})">
+                        <div class="diary-left">
+                            <div class="diary-item-date">${monthDay}</div>
+                            <div class="diary-item-year">${dateObj.getFullYear()}</div>
+                        </div>
+                        <div class="diary-right">
+                            <div class="item-actions">
+                                <button class="action-link link-edit" onclick="triggerCardEdit(${diary.id}, event)">EDIT</button>
+                                <button class="action-link link-delete" onclick="triggerCardDelete(${diary.id}, event)">DEL</button>
+                            </div>
+                            <div class="diary-title">${escapeHTML(title)}</div>
+                            <div class="diary-text">${escapeHTML(restContent)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 開啟日記詳情彈窗
+        function openDiaryModal(id) {
+            targetDiaryId = id;
+            const diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
+            const target = diaries.find(item => item.id === id);
+            if (!target) return;
+
+            const lines = target.content.split('\n');
+            document.getElementById('viewDate').textContent = target.date.replace(/-/g, ' . ');
+            document.getElementById('viewTitle').textContent = lines[0];
+            document.getElementById('viewText').textContent = lines.slice(1).join('\n');
+
+            document.getElementById('editModalDate').value = target.date;
+            document.getElementById('editModalText').value = target.content;
+
+            switchModalToView();
+            document.getElementById('diaryModal').style.display = 'flex';
+        }
+
+        // 開啟回收桶彈窗
+        function openTrashModal() {
+            const trashList = document.getElementById('trashList');
+            const trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
+
+            if (trash.length === 0) {
+                trashList.innerHTML = '<div style="text-align:center; color:var(--hint-text); padding:30px 0; font-size:13px;">TRASH BIN IS EMPTY</div>';
+            } else {
+                trashList.innerHTML = trash.map(item => {
+                    const title = item.content.split('\n')[0];
+                    return `
+                        <div class="trash-item">
+                            <div class="trash-info">
+                                <div class="trash-title">${escapeHTML(title)}</div>
+                                <div class="trash-date">${item.date}</div>
+                            </div>
+                            <div style="display:flex; gap:10px; flex-shrink:0;">
+                                <button class="action-link link-edit" style="color:#424242;" onclick="restoreDiary(${item.id})">RESTORE</button>
+                                <button class="action-link link-delete" onclick="deletePermanently(${item.id})">CLEAR</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            document.getElementById('trashModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function switchModalToEdit() {
+            document.getElementById('modeView').style.display = 'none';
+            document.getElementById('viewActions').style.display = 'none';
+            document.getElementById('modeEdit').style.display = 'block';
+            document.getElementById('editActions').style.display = 'flex';
+        }
+
+        function switchModalToView() {
+            document.getElementById('modeEdit').style.display = 'none';
+            document.getElementById('editActions').style.display = 'none';
+            document.getElementById('modeView').style.display = 'block';
+            document.getElementById('viewActions').style.display = 'flex';
+        }
+
+        // 卡片上的 EDIT 點擊事件
+        function triggerCardEdit(id, event) {
+            event.stopPropagation(); // 阻止觸發卡片點擊打開閱讀模態
+            openDiaryModal(id);
+            switchModalToEdit(); // 直接以編輯模式打開
+        }
+
+        // 卡片上的 DEL 點擊事件
+        function triggerCardDelete(id, event) {
+            event.stopPropagation();
+            moveToTrash(id);
+        }
+
+        // 彈窗內的 UPDATE 動作
+        function handleModalUpdate() {
+            const newDate = document.getElementById('editModalDate').value;
+            const newContent = document.getElementById('editModalText').value.trim();
+
+            if (!newDate || !newContent) return;
+
+            let diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
+            diaries = diaries.map(item => {
+                if (item.id === targetDiaryId) {
+                    item.date = newDate;
+                    item.content = newContent;
+                }
+                return item;
+            });
+
+            diaries.sort((a, b) => new Date(b.date) - new Date(a.date));
+            localStorage.setItem('myDiaries', JSON.stringify(diaries));
+            
+            loadDiaries();
+            openDiaryModal(targetDiaryId); 
+        }
+
+        // 彈窗內的 DELETE 動作
+        function handleModalDelete() {
+            moveToTrash(targetDiaryId);
+            closeModal('diaryModal');
+        }
+
+        // 核心邏輯：移至回收桶
+        function moveToTrash(id) {
+            let diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
+            let trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
+
+            const targetIndex = diaries.findIndex(item => item.id === id);
+            if (targetIndex === -1) return;
+
+            // 從主陣列切出，推入回收桶
+            const [removed] = diaries.splice(targetIndex, 1);
+            trash.unshift(removed);
+
+            localStorage.setItem('myDiaries', JSON.stringify(diaries));
+            localStorage.setItem('myDiariesTrash', JSON.stringify(trash));
+
+            loadDiaries();
+            updateTrashCount();
+        }
+
+        // 核心邏輯：還原日記
+        function restoreDiary(id) {
+            let diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
+            let trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
+
+            const targetIndex = trash.findIndex(item => item.id === id);
+            if (targetIndex === -1) return;
+
+            const [restored] = trash.splice(targetIndex, 1);
+            diaries.push(restored);
+            diaries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            localStorage.setItem('myDiaries', JSON.stringify(diaries));
+            localStorage.setItem('myDiariesTrash', JSON.stringify(trash));
+
+            loadDiaries();
+            updateTrashCount();
+            openTrashModal(); // 刷新回收桶內部畫面
+        }
+
+        // 核心邏輯：永久刪除
+        function deletePermanently(id) {
+            if (confirm('This will delete the entry forever. Are you sure?')) {
+                let trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
+                trash = trash.filter(item => item.id !== id);
+                localStorage.setItem('myDiariesTrash', JSON.stringify(trash));
+
+                updateTrashCount();
+                openTrashModal();
+            }
+        }
+
+        // 匯出 Excel
+        function exportToExcel() {
+            const diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
+            if (diaries.length === 0) return;
+            let csvContent = "\uFEFFDate,Title,Content\n";
+            diaries.forEach(item => {
+                const lines = item.content.split('\n');
+                const title = lines[0].replace(/"/g, '""');
+                const content = lines.slice(1).join('\n').replace(/"/g, '""');
+                csvContent += `"${item.date}","${title}","${content}"\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "mono_diary_backup.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+    </script>
+</body>
+</html>
