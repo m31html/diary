@@ -29,14 +29,14 @@
             background-color: var(--bg-color);
             color: var(--primary-text);
             margin: 0;
-            padding: 20px 14px;
+            padding: 20px 14px 80px 14px; /* 底部加留白，避免內容被懸浮按鈕擋住 */
             display: flex;
             justify-content: center;
             -webkit-font-smoothing: antialiased;
         }
 
         @media (min-width: 768px) {
-            body { padding: 40px 20px; }
+            body { padding: 40px 20px 100px 20px; }
         }
 
         .container {
@@ -62,34 +62,6 @@
         }
         @media (min-width: 768px) {
             h1 { font-size: 28px; }
-        }
-
-        /* 內嵌式直接書寫欄位 */
-        .inline-writer {
-            background: var(--card-color);
-            padding: 20px;
-            border-radius: var(--radius-large);
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
-        }
-        @media (min-width: 768px) {
-            .inline-writer { padding: 25px; margin-bottom: 30px; }
-        }
-        
-        .writer-meta {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .writer-title {
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--acc-grey);
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         /* 工具列與篩選區 */
@@ -173,6 +145,36 @@
         }
         textarea:focus { background: var(--card-color); border-color: var(--acc-grey); }
 
+        /* 🌟 右下角懸浮 + 按鈕 */
+        .fab {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            width: 56px;
+            height: 56px;
+            background-color: var(--acc-grey);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            font-weight: 300;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            z-index: 999;
+            border: none;
+            outline: none;
+        }
+        .fab:hover {
+            background-color: var(--acc-grey-hover);
+            transform: scale(1.05);
+        }
+        @media (min-width: 768px) {
+            .fab { right: 40px; bottom: 40px; width: 64px; height: 64px; font-size: 32px; }
+        }
+
         /* 日記列表排版 */
         .diary-list {
             display: flex;
@@ -185,7 +187,7 @@
             border-radius: var(--radius-large);
             border: 1px solid transparent;
             display: flex;
-            flex-direction: row; /* 左右雙欄配置 */
+            flex-direction: row; 
             overflow: hidden;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
@@ -209,10 +211,7 @@
             box-sizing: border-box;
         }
         @media (min-width: 576px) {
-            .diary-left {
-                width: 100px; 
-                padding: 30px 10px;
-            }
+            .diary-left { width: 100px; padding: 30px 10px; }
         }
         
         .diary-item-date { font-size: 18px; font-weight: 400; color: var(--primary-text); }
@@ -270,7 +269,7 @@
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.3);
             justify-content: center;
-            align-items: flex-end; /* 手機端從底部彈出抽屜 */
+            align-items: flex-end; 
             z-index: 1000;
             animation: fadeIn 0.2s ease-out;
         }
@@ -283,7 +282,7 @@
             padding: 24px;
             border-radius: var(--radius-large) var(--radius-large) 0 0;
             width: 100%;
-            max-height: 80vh;
+            max-height: 85vh;
             box-shadow: 0 -10px 30px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
@@ -340,11 +339,7 @@
             align-items: flex-start;
         }
         @media (min-width: 480px) {
-            .trash-item {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-            }
+            .trash-item { flex-direction: row; justify-content: space-between; align-items: center; }
         }
         
         .trash-info { overflow: hidden; width: 100%; }
@@ -395,18 +390,6 @@
             <h1>MonoDiary</h1>
         </header>
 
-        <!-- 直接內嵌書寫新日記 -->
-        <div class="inline-writer">
-            <div class="writer-meta">
-                <div class="writer-title">新日記</div>
-                <input type="date" id="diaryDate">
-            </div>
-            <textarea id="diaryText" placeholder="Title on the first line...&#10;Content on the next lines."></textarea>
-            <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
-                <button class="btn btn-acc" onclick="saveNewDiary()">Save</button>
-            </div>
-        </div>
-
         <!-- 總覽與篩選工具列 -->
         <div class="toolbar">
             <div class="filter-group">
@@ -429,8 +412,26 @@
             </div>
         </div>
 
-        <!-- 日記列表 -->
+        <!-- 日記列表 (主頁面僅顯示已有的日記) -->
         <div id="diaryList" class="diary-list"></div>
+    </div>
+
+    <!-- 🌟 右下角固定的新增懸浮按鈕 -->
+    <button class="fab" onclick="openWriterModal()">+</button>
+
+    <!-- 🌟 3. 新增日記專用彈窗 -->
+    <div id="writerModal" class="modal" onclick="closeModal('writerModal', event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-body">
+                <div class="view-date" style="margin-bottom: 5px;">NEW ENTRY DATE</div>
+                <input type="date" id="diaryDate" style="width: 100%; box-sizing: border-box; margin-bottom: 15px;">
+                <textarea id="diaryText" style="height: 250px;" placeholder="Title on the first line...&#10;Content on the next lines."></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <button class="btn btn-sec" onclick="closeModal('writerModal')">CANCEL</button>
+                <button class="btn btn-acc" onclick="saveNewDiary()">SAVE</button>
+            </div>
+        </div>
     </div>
 
     <!-- 1. 閱讀/編輯日記彈窗 -->
@@ -484,7 +485,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             initYearFilter();
-            resetWriter();
             loadDiaries();
             updateTrashCount();
         });
@@ -500,9 +500,11 @@
             }
         }
 
-        function resetWriter() {
+        // 開啟新增日記彈窗，並初始化時間為今天
+        function openWriterModal() {
             document.getElementById('diaryDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('diaryText').value = '';
+            document.getElementById('writerModal').style.display = 'flex';
         }
 
         function updateTrashCount() {
@@ -524,7 +526,7 @@
             diaries.sort((a, b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem('myDiaries', JSON.stringify(diaries));
             
-            resetWriter();
+            closeModal('writerModal');
             loadDiaries();
         }
 
@@ -720,7 +722,6 @@
                 csvContent += `"${item.date}","${title}","${content}"\n`;
             });
 
-            // 強制封裝 BOM 標頭，終結中文在 Excel 中開啟會變成亂碼的夢魘
             const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
             const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
             
