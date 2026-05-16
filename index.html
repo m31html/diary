@@ -29,10 +29,11 @@
             background-color: var(--bg-color);
             color: var(--primary-text);
             margin: 0;
-            padding: 20px 14px 80px 14px; /* 底部加留白，避免內容被懸浮按鈕擋住 */
+            padding: 20px 14px 80px 14px; 
             display: flex;
             justify-content: center;
             -webkit-font-smoothing: antialiased;
+            overscroll-behavior-x: none; 
         }
 
         @media (min-width: 768px) {
@@ -145,7 +146,7 @@
         }
         textarea:focus { background: var(--card-color); border-color: var(--acc-grey); }
 
-        /* 🌟 右下角懸浮 + 按鈕 */
+        /* 右下角懸浮 + 按鈕 */
         .fab {
             position: fixed;
             right: 24px;
@@ -175,11 +176,23 @@
             .fab { right: 40px; bottom: 40px; width: 64px; height: 64px; font-size: 32px; }
         }
 
-        /* 日記列表排版 */
+        /* 日記列表排版與滑動動畫 */
         .diary-list {
             display: flex;
             flex-direction: column;
             gap: 16px;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            opacity: 1;
+            transform: translateX(0);
+            /* 電腦版加上游標暗示可以拖拽 */
+            cursor: grab;
+        }
+        .diary-list:active {
+            cursor: grabbing;
+        }
+        
+        .diary-list.fade-out {
+            opacity: 0;
         }
 
         .diary-item {
@@ -189,8 +202,9 @@
             display: flex;
             flex-direction: row; 
             overflow: hidden;
-            cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            user-select: none;
+            -webkit-user-select: none;
         }
         .diary-item:hover {
             border-color: var(--border-color);
@@ -412,20 +426,20 @@
             </div>
         </div>
 
-        <!-- 日記列表 (主頁面僅顯示已有的日記) -->
+        <!-- 日記列表 -->
         <div id="diaryList" class="diary-list"></div>
     </div>
 
-    <!-- 🌟 右下角固定的新增懸浮按鈕 -->
+    <!-- 右下角固定的新增懸浮按鈕 -->
     <button class="fab" onclick="openWriterModal()">+</button>
 
-    <!-- 🌟 3. 新增日記專用彈窗 -->
+    <!-- 新增日記專用彈窗 -->
     <div id="writerModal" class="modal" onclick="closeModal('writerModal', event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-body">
                 <div class="view-date" style="margin-bottom: 5px;">NEW ENTRY DATE</div>
                 <input type="date" id="diaryDate" style="width: 100%; box-sizing: border-box; margin-bottom: 15px;">
-                <textarea id="diaryText" style="height: 250px;" placeholder="Title on the first line...&#10;Content on the next lines."></textarea>
+                <textarea id="diaryText" style="height: 250px;" placeholder="第一行是標題...&#10;第二行開始是內容。"></textarea>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 16px;">
                 <button class="btn btn-sec" onclick="closeModal('writerModal')">取消</button>
@@ -434,7 +448,7 @@
         </div>
     </div>
 
-    <!-- 1. 閱讀/編輯日記彈窗 -->
+    <!-- 閱讀/編輯日記彈窗 -->
     <div id="diaryModal" class="modal" onclick="closeModal('diaryModal', event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-body">
@@ -448,7 +462,7 @@
                 <div id="modeEdit" style="display: none;">
                     <div class="view-date" style="margin-bottom: 5px;">EDIT ENTRY DATE</div>
                     <input type="date" id="editModalDate" class="modal-edit-field" style="display: block;">
-                    <textarea id="editModalText" class="modal-edit-field modal-textarea" style="display: block;" placeholder="Edit title on the first line..."></textarea>
+                    <textarea id="editModalText" class="modal-edit-field modal-textarea" style="display: block;" placeholder="編輯標題..."></textarea>
                 </div>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 16px;">
@@ -467,11 +481,11 @@
         </div>
     </div>
 
-    <!-- 2. 回收桶彈窗 -->
+    <!-- 回收桶彈窗 -->
     <div id="trashModal" class="modal" onclick="closeModal('trashModal', event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-body">
-                <div class="view-title" style="margin-bottom: 16px;">Trash Bin</div>
+                <div class="view-title" style="margin-bottom: 16px;">回收桶</div>
                 <div id="trashList" class="trash-list"></div>
             </div>
             <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 16px;">
@@ -482,11 +496,21 @@
 
     <script>
         let targetDiaryId = null;
+        
+        // 拖拽手勢通用變數 (支援手機觸控與電腦滑鼠)
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let isMouseDown = false;
+        let hasDragged = false; // 用於區分「點擊卡片」與「拖拽換月」
 
         document.addEventListener('DOMContentLoaded', () => {
             initYearFilter();
+            const currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
+            document.getElementById('filterMonth').value = currentMonth;
+            
             loadDiaries();
             updateTrashCount();
+            setupDragGestures();
         });
 
         function initYearFilter() {
@@ -498,9 +522,99 @@
                 opt.textContent = i;
                 yearSelect.appendChild(opt);
             }
+            yearSelect.value = currentYear;
         }
 
-        // 開啟新增日記彈窗，並初始化時間為今天
+        // 🌟 同時綁定手機觸控 (Touch) 與電腦滑鼠 (Mouse) 左右拖拽事件
+        function setupDragGestures() {
+            const listContainer = document.getElementById('diaryList');
+
+            // --- 手機觸控事件 ---
+            listContainer.addEventListener('touchstart', (e) => {
+                dragStartX = e.touches[0].clientX;
+                dragStartY = e.touches[0].clientY;
+            }, { passive: true });
+
+            listContainer.addEventListener('touchend', (e) => {
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                handleDragEnd(endX, endY);
+            }, { passive: true });
+
+
+            // --- 電腦滑鼠事件 ---
+            listContainer.addEventListener('mousedown', (e) => {
+                // 排除點擊到按鈕或其他表單元件
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') return;
+                isMouseDown = true;
+                hasDragged = false;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isMouseDown) return;
+                // 如果移動距離超過 10px，判定為正在拖拽，防止觸發點擊開啟卡片
+                if (Math.abs(e.clientX - dragStartX) > 10) {
+                    hasDragged = true;
+                }
+            });
+
+            window.addEventListener('mouseup', (e) => {
+                if (!isMouseDown) return;
+                isMouseDown = false;
+                if (hasDragged) {
+                    handleDragEnd(e.clientX, e.clientY);
+                }
+            });
+        }
+
+        // 處理拖拽結束後的判定邏輯
+        function handleDragEnd(endX, endY) {
+            const deltaX = endX - dragStartX;
+            const deltaY = endY - dragStartY;
+
+            if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX > 0) {
+                    changeMonthOffset(-1); // 👈 向右拖：看上一個月
+                } else {
+                    changeMonthOffset(1);  // 👉 向左拖：看下一個月
+                }
+            }
+        }
+
+        function changeMonthOffset(offset) {
+            const yearSelect = document.getElementById('filterYear');
+            const monthSelect = document.getElementById('filterMonth');
+
+            let currentYear = yearSelect.value === 'all' ? new Date().getFullYear() : parseInt(yearSelect.value);
+            let currentMonth = monthSelect.value === 'all' ? (new Date().getMonth() + 1) : parseInt(monthSelect.value);
+
+            currentMonth += offset;
+
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear -= 1;
+            } else if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear += 1;
+            }
+
+            const yearExists = Array.from(yearSelect.options).some(opt => opt.value == currentYear);
+            if (!yearExists && yearSelect.value !== 'all') return;
+
+            const listContainer = document.getElementById('diaryList');
+            listContainer.classList.add('fade-out');
+
+            setTimeout(() => {
+                if (yearSelect.value !== 'all') yearSelect.value = currentYear;
+                monthSelect.value = currentMonth.toString().padStart(2, '0');
+
+                loadDiaries();
+                listContainer.classList.remove('fade-out');
+            }, 150);
+        }
+
         function openWriterModal() {
             document.getElementById('diaryDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('diaryText').value = '';
@@ -517,7 +631,7 @@
             const contentVal = document.getElementById('diaryText').value.trim();
 
             if (!dateVal || !contentVal) {
-                alert('Please write something first.');
+                alert('請先寫點內容吧！');
                 return;
             }
 
@@ -544,7 +658,7 @@
             });
 
             if (filteredDiaries.length === 0) {
-                diaryListContainer.innerHTML = '<div class="no-data">EMPTY.</div>';
+                diaryListContainer.innerHTML = '<div class="no-data" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">暫無日記。</div>';
                 return;
             }
 
@@ -556,12 +670,12 @@
                 const monthDay = `${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getDate().toString().padStart(2, '0')}`;
 
                 return `
-                    <div class="diary-item" onclick="openDiaryModal(${diary.id})">
-                        <div class="diary-left">
+                    <div class="diary-item">
+                        <div class="diary-left" onclick="if(!hasDragged) openDiaryModal(${diary.id})">
                             <div class="diary-item-date">${monthDay}</div>
                             <div class="diary-item-year">${dateObj.getFullYear()}</div>
                         </div>
-                        <div class="diary-right">
+                        <div class="diary-right" onclick="if(!hasDragged) openDiaryModal(${diary.id})">
                             <div class="diary-title">${escapeHTML(title)}</div>
                             <div class="diary-text">${escapeHTML(restContent)}</div>
                         </div>
@@ -593,7 +707,7 @@
             const trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
 
             if (trash.length === 0) {
-                trashList.innerHTML = '<div style="text-align:center; color:var(--hint-text); padding:30px 0; font-size:13px;">TRASH BIN IS EMPTY</div>';
+                trashList.innerHTML = '<div style="text-align:center; color:var(--hint-text); padding:30px 0; font-size:13px;">回收桶空空如也</div>';
             } else {
                 trashList.innerHTML = trash.map(item => {
                     const title = item.content.split('\n')[0];
@@ -604,7 +718,7 @@
                                 <div class="trash-date">${item.date}</div>
                             </div>
                             <div class="trash-actions">
-                                <button class="action-link link-edit" style="color:#424242;" onclick="restoreDiary(${item.id})">還原</button>
+                                <button class="action-link" style="color:#424242;" onclick="restoreDiary(${item.id})">還原</button>
                                 <button class="action-link link-delete" onclick="deletePermanently(${item.id})">清除</button>
                             </div>
                         </div>
@@ -696,7 +810,7 @@
         }
 
         function deletePermanently(id) {
-            if (confirm('This will delete the entry forever. Are you sure?')) {
+            if (confirm('這將永久刪除此日記且無法復原，確定要清除嗎？')) {
                 let trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
                 trash = trash.filter(item => item.id !== id);
                 localStorage.setItem('myDiariesTrash', JSON.stringify(trash));
