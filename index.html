@@ -231,7 +231,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* 讓內容上下居中 */
+            justify-content: center;
         }
         @media (min-width: 576px) {
             .diary-right { padding: 25px 30px; }
@@ -546,7 +546,6 @@
                 return;
             }
 
-            // 核心修改：移除卡片上的 item-actions 區塊，讓整張卡片單純做為觸發閱讀彈窗的載體
             diaryListContainer.innerHTML = filteredDiaries.map(diary => {
                 const lines = diary.content.split('\n');
                 const title = lines[0];
@@ -707,15 +706,24 @@
 
         function exportToExcel() {
             const diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
-            if (diaries.length === 0) return;
-            let csvContent = "\uFEFFDate,Title,Content\n";
+            if (diaries.length === 0) {
+                alert("沒有日記可以匯出！");
+                return;
+            }
+
+            let csvContent = "Date,Title,Content\n";
+            
             diaries.forEach(item => {
                 const lines = item.content.split('\n');
                 const title = lines[0].replace(/"/g, '""');
                 const content = lines.slice(1).join('\n').replace(/"/g, '""');
                 csvContent += `"${item.date}","${title}","${content}"\n`;
             });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+            // 強制封裝 BOM 標頭，終結中文在 Excel 中開啟會變成亂碼的夢魘
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+            
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.setAttribute("download", "mono_diary_backup.csv");
