@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MonoDiary - 極簡時光</title>
 
     <link rel="manifest" href="manifest.json">
@@ -29,10 +29,14 @@
             background-color: var(--bg-color);
             color: var(--primary-text);
             margin: 0;
-            padding: 40px 20px;
+            padding: 20px 14px; /* 手機端舒適留白 */
             display: flex;
             justify-content: center;
             -webkit-font-smoothing: antialiased;
+        }
+
+        @media (min-width: 768px) {
+            body { padding: 40px 20px; }
         }
 
         .container {
@@ -42,25 +46,34 @@
 
         header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 24px;
+        }
+        @media (min-width: 768px) {
+            header { margin-bottom: 40px; }
         }
 
         h1 {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 300;
             letter-spacing: 2px;
             color: var(--acc-grey);
             margin: 0;
             text-transform: uppercase;
         }
+        @media (min-width: 768px) {
+            h1 { font-size: 28px; }
+        }
 
         /* 內嵌式直接書寫欄位 */
         .inline-writer {
             background: var(--card-color);
-            padding: 25px;
+            padding: 20px;
             border-radius: var(--radius-large);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        @media (min-width: 768px) {
+            .inline-writer { padding: 25px; margin-bottom: 30px; }
         }
         
         .writer-meta {
@@ -68,10 +81,11 @@
             gap: 15px;
             margin-bottom: 15px;
             align-items: center;
+            justify-content: space-between;
         }
         
         .writer-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
             color: var(--acc-grey);
             text-transform: uppercase;
@@ -81,34 +95,51 @@
         /* 工具列與篩選區 */
         .toolbar {
             display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 20px;
+            padding-bottom: 16px;
+        }
+        @media (min-width: 520px) {
+            .toolbar {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding-bottom: 20px;
+                margin-bottom: 30px;
+            }
         }
 
         .filter-group, .action-group {
             display: flex;
             gap: 10px;
             align-items: center;
+            width: 100%;
+        }
+        @media (min-width: 520px) {
+            .filter-group, .action-group { width: auto; }
         }
 
+        .filter-group select { flex: 1; }
+        @media (min-width: 520px) { .filter-group select { flex: none; } }
+
+        .action-group .btn { flex: 1; text-align: center; }
+        @media (min-width: 520px) { .action-group .btn { flex: none; } }
+
         select, input[type="date"] {
-            padding: 10px 16px;
+            padding: 12px 16px;
             border: 1px solid var(--border-color);
             background-color: var(--card-color);
             border-radius: var(--radius-medium);
-            font-size: 13px;
+            font-size: 14px;
             color: var(--secondary-text);
             outline: none;
-            -webkit-appearance: none;
         }
 
         /* 按鈕樣式 */
         .btn {
-            padding: 10px 24px;
+            padding: 12px 20px;
             font-size: 13px;
             letter-spacing: 1px;
             border-radius: var(--radius-medium);
@@ -116,14 +147,12 @@
             border: 1px solid transparent;
             transition: all 0.2s;
             text-transform: uppercase;
+            font-weight: 500;
         }
-        
         .btn-acc { background: var(--acc-grey); color: white; }
         .btn-acc:hover { background: var(--acc-grey-hover); }
-        
         .btn-sec { background: transparent; color: var(--secondary-text); border-color: var(--border-color); }
         .btn-sec:hover { background: var(--border-color); color: var(--primary-text); }
-        
         .btn-danger { background: transparent; color: #e57373; border-color: #ffcccc; }
         .btn-danger:hover { background: #ffebee; color: #d32f2f; }
 
@@ -132,8 +161,8 @@
             height: 140px;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-medium);
-            padding: 18px;
-            font-size: 14px;
+            padding: 16px;
+            font-size: 15px;
             line-height: 1.6;
             color: var(--secondary-text);
             resize: none;
@@ -148,14 +177,16 @@
         .diary-list {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
         }
 
+        /* 核心修改：堅持左右雙欄排版 */
         .diary-item {
             background: var(--card-color);
             border-radius: var(--radius-large);
             border: 1px solid transparent;
             display: flex;
+            flex-direction: row; /* 堅持左右雙欄配置 */
             overflow: hidden;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
@@ -165,38 +196,58 @@
             transform: translateY(-2px);
         }
 
-        /* 左側日期欄 */
+        /* 左側日期欄：針對手機端縮減寬度以免擠壓內容 */
         .diary-left {
-            width: 100px;
+            width: 75px; /* 手機端緊湊寬度 */
             background: #fafafa;
             border-right: 1px solid var(--border-color);
-            padding: 30px 10px;
+            padding: 20px 5px;
             text-align: center;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
             flex-shrink: 0;
+            box-sizing: border-box;
         }
-        .diary-item-date { font-size: 22px; font-weight: 300; color: var(--primary-text); }
-        .diary-item-year { font-size: 11px; color: var(--hint-text); margin-top: 5px; letter-spacing: 1px; }
+        @media (min-width: 576px) {
+            .diary-left {
+                width: 100px; /* 桌機恢復原本寬度 */
+                padding: 30px 10px;
+            }
+        }
+        
+        .diary-item-date { font-size: 18px; font-weight: 400; color: var(--primary-text); }
+        .diary-item-year { font-size: 11px; color: var(--hint-text); margin-top: 3px; letter-spacing: 0.5px; }
+        
+        @media (min-width: 576px) {
+            .diary-item-date { font-size: 22px; font-weight: 300; }
+            .diary-item-year { font-size: 11px; margin-top: 5px; letter-spacing: 1px; }
+        }
 
         /* 右側內容欄 */
         .diary-right {
-            padding: 30px;
+            padding: 18px 20px;
             flex-grow: 1;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        @media (min-width: 576px) {
+            .diary-right { padding: 30px; }
         }
         
         .diary-title {
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 500;
             color: var(--primary-text);
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            padding-right: 90px; /* 留空間給卡片按鈕 */
+        }
+        @media (min-width: 576px) {
+            .diary-title { font-size: 17px; margin-bottom: 12px; padding-right: 90px; }
         }
         
         .diary-text {
@@ -210,27 +261,45 @@
             overflow: hidden;
             text-overflow: ellipsis;
             max-height: 44.8px; 
+            margin-bottom: 10px; /* 為底部按鈕留出間隔 */
+        }
+        @media (min-width: 576px) {
+            .diary-text { margin-bottom: 0px; }
         }
 
-        /* 卡片右上角操作按鈕群組 */
+        /* 核心修改：按鈕移至底部，靠右對齊 */
         .item-actions {
-            position: absolute;
-            top: 32px;
-            right: 30px;
             display: flex;
-            gap: 14px;
+            gap: 20px;
             background: var(--card-color);
-            padding-left: 10px;
-            z-index: 5;
+            justify-content: flex-end; /* 右對齊 */
+            margin-top: auto; /* 推至最底部 */
+            padding-top: 4px;
         }
+        @media (min-width: 576px) {
+            .item-actions {
+                position: absolute;
+                top: 32px;
+                right: 30px;
+                padding-top: 0;
+                margin-top: 0;
+                padding-left: 10px;
+                z-index: 5;
+            }
+        }
+        
         .action-link {
-            font-size: 11px;
+            font-size: 12px;
+            font-weight: 500;
             letter-spacing: 1px;
             cursor: pointer;
             background: none;
             border: none;
             text-transform: uppercase;
-            padding: 0;
+            padding: 8px 4px; /* 加大上下點擊熱區，手機極好點 */
+        }
+        @media (min-width: 576px) {
+            .action-link { font-size: 11px; padding: 0; }
         }
         .link-edit { color: var(--hint-text); }
         .link-edit:hover { color: var(--acc-grey); }
@@ -244,71 +313,105 @@
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.3);
             justify-content: center;
-            align-items: center;
+            align-items: flex-end; /* 手機端從底部彈出抽屜 */
             z-index: 1000;
             animation: fadeIn 0.2s ease-out;
+        }
+        @media (min-width: 576px) {
+            .modal { align-items: center; }
         }
         
         .modal-content {
             background: var(--card-color);
-            padding: 35px;
-            border-radius: var(--radius-large);
-            width: 90%;
-            max-width: 580px;
+            padding: 24px;
+            border-radius: var(--radius-large) var(--radius-large) 0 0;
+            width: 100%;
             max-height: 80vh;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
-            animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            animation: slideUpMobile 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            box-sizing: border-box;
+        }
+        @media (min-width: 576px) {
+            .modal-content {
+                border-radius: var(--radius-large);
+                width: 90%;
+                max-width: 580px;
+                max-height: 80vh;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+                animation: slideUp 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            }
         }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUpMobile { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes slideUp { from { transform: translateY(20px); } to { transform: translateY(0); } }
 
         .modal-body {
             overflow-y: auto;
             flex-grow: 1;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             padding-right: 5px;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .view-date { font-size: 13px; color: var(--hint-text); letter-spacing: 1px; margin-bottom: 10px; text-transform: uppercase; }
-        .view-title { font-size: 20px; font-weight: 500; color: var(--primary-text); margin-bottom: 20px; line-height: 1.4; }
+        .view-date { font-size: 12px; color: var(--hint-text); letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase; }
+        .view-title { font-size: 18px; font-weight: 500; color: var(--primary-text); margin-bottom: 16px; line-height: 1.4; }
         .view-text { font-size: 15px; line-height: 1.8; color: var(--secondary-text); white-space: pre-wrap; }
 
         .modal-edit-field { display: none; width: 100%; box-sizing: border-box; }
-        .modal-textarea { height: 260px; background: #fafafa; margin-top: 15px; }
+        .modal-textarea { height: 220px; background: #fafafa; margin-top: 12px; }
 
         /* 回收桶內部列表樣式 */
         .trash-list {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             max-height: 45vh;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .trash-item {
-            padding: 15px 20px;
+            padding: 16px;
             background: #fafafa;
             border-radius: var(--radius-medium);
             border: 1px solid var(--border-color);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
         }
-        .trash-info {
-            overflow: hidden;
-            padding-right: 15px;
+        @media (min-width: 480px) {
+            .trash-item {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
         }
+        
+        .trash-info { overflow: hidden; width: 100%; }
         .trash-title { font-size: 14px; font-weight: 500; color: var(--primary-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .trash-date { font-size: 11px; color: var(--hint-text); margin-top: 2px; }
+
+        .trash-actions {
+            display: flex;
+            gap: 16px;
+            width: 100%;
+            justify-content: flex-end;
+            border-top: 1px solid #eee;
+            padding-top: 6px;
+        }
+        @media (min-width: 480px) {
+            .trash-actions { width: auto; border-top: none; padding-top: 0; }
+        }
 
         .no-data {
             text-align: center;
             color: var(--hint-text);
             font-size: 13px;
             letter-spacing: 1px;
-            padding: 60px;
+            padding: 50px 20px;
             background: var(--card-color);
             border-radius: var(--radius-large);
             text-transform: uppercase;
@@ -325,11 +428,11 @@
         <!-- 直接內嵌書寫新日記 -->
         <div class="inline-writer">
             <div class="writer-meta">
-                <div class="writer-title">New Entry</div>
+                <div class="writer-title">新日記</div>
                 <input type="date" id="diaryDate">
             </div>
             <textarea id="diaryText" placeholder="Title on the first line...&#10;Content on the next lines."></textarea>
-            <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+            <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
                 <button class="btn btn-acc" onclick="saveNewDiary()">Save</button>
             </div>
         </div>
@@ -351,8 +454,8 @@
                 </select>
             </div>
             <div class="action-group">
-                <button class="btn btn-sec" onclick="openTrashModal()">TRASH (<span id="trashCount">0</span>)</button>
-                <button class="btn btn-sec" onclick="exportToExcel()">EXPORT</button>
+                <button class="btn btn-sec" onclick="openTrashModal()">回收桶 (<span id="trashCount">0</span>)</button>
+                <button class="btn btn-sec" onclick="exportToExcel()">匯出</button>
             </div>
         </div>
 
@@ -377,7 +480,7 @@
                     <textarea id="editModalText" class="modal-edit-field modal-textarea" style="display: block;" placeholder="Edit title on the first line..."></textarea>
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 16px;">
                 <div id="viewActions" style="display: flex; gap: 10px; width: 100%; justify-content: space-between;">
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-sec" onclick="switchModalToEdit()">EDIT</button>
@@ -397,10 +500,10 @@
     <div id="trashModal" class="modal" onclick="closeModal('trashModal', event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-body">
-                <div class="view-title" style="margin-bottom: 20px;">Trash Bin</div>
+                <div class="view-title" style="margin-bottom: 16px;">Trash Bin</div>
                 <div id="trashList" class="trash-list"></div>
             </div>
-            <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 16px;">
                 <button class="btn btn-acc" onclick="closeModal('trashModal')">CLOSE</button>
             </div>
         </div>
@@ -437,7 +540,6 @@
             document.getElementById('trashCount').textContent = trash.length;
         }
 
-        // 儲存新日記
         function saveNewDiary() {
             const dateVal = document.getElementById('diaryDate').value;
             const contentVal = document.getElementById('diaryText').value.trim();
@@ -456,7 +558,6 @@
             loadDiaries();
         }
 
-        // 渲染主日記列表
         function loadDiaries() {
             const diaryListContainer = document.getElementById('diaryList');
             const diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
@@ -489,19 +590,18 @@
                             <div class="diary-item-year">${dateObj.getFullYear()}</div>
                         </div>
                         <div class="diary-right">
+                            <div class="diary-title">${escapeHTML(title)}</div>
+                            <div class="diary-text">${escapeHTML(restContent)}</div>
                             <div class="item-actions">
                                 <button class="action-link link-edit" onclick="triggerCardEdit(${diary.id}, event)">EDIT</button>
                                 <button class="action-link link-delete" onclick="triggerCardDelete(${diary.id}, event)">DEL</button>
                             </div>
-                            <div class="diary-title">${escapeHTML(title)}</div>
-                            <div class="diary-text">${escapeHTML(restContent)}</div>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // 開啟日記詳情彈窗
         function openDiaryModal(id) {
             targetDiaryId = id;
             const diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
@@ -520,7 +620,6 @@
             document.getElementById('diaryModal').style.display = 'flex';
         }
 
-        // 開啟回收桶彈窗
         function openTrashModal() {
             const trashList = document.getElementById('trashList');
             const trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
@@ -536,9 +635,9 @@
                                 <div class="trash-title">${escapeHTML(title)}</div>
                                 <div class="trash-date">${item.date}</div>
                             </div>
-                            <div style="display:flex; gap:10px; flex-shrink:0;">
-                                <button class="action-link link-edit" style="color:#424242;" onclick="restoreDiary(${item.id})">RESTORE</button>
-                                <button class="action-link link-delete" onclick="deletePermanently(${item.id})">CLEAR</button>
+                            <div class="trash-actions">
+                                <button class="action-link link-edit" style="color:#424242;" onclick="restoreDiary(${item.id})">還原</button>
+                                <button class="action-link link-delete" onclick="deletePermanently(${item.id})">清除</button>
                             </div>
                         </div>
                     `;
@@ -565,20 +664,17 @@
             document.getElementById('viewActions').style.display = 'flex';
         }
 
-        // 卡片上的 EDIT 點擊事件
         function triggerCardEdit(id, event) {
-            event.stopPropagation(); // 阻止觸發卡片點擊打開閱讀模態
+            event.stopPropagation(); 
             openDiaryModal(id);
-            switchModalToEdit(); // 直接以編輯模式打開
+            switchModalToEdit(); 
         }
 
-        // 卡片上的 DEL 點擊事件
         function triggerCardDelete(id, event) {
             event.stopPropagation();
             moveToTrash(id);
         }
 
-        // 彈窗內的 UPDATE 動作
         function handleModalUpdate() {
             const newDate = document.getElementById('editModalDate').value;
             const newContent = document.getElementById('editModalText').value.trim();
@@ -601,13 +697,11 @@
             openDiaryModal(targetDiaryId); 
         }
 
-        // 彈窗內的 DELETE 動作
         function handleModalDelete() {
             moveToTrash(targetDiaryId);
             closeModal('diaryModal');
         }
 
-        // 核心邏輯：移至回收桶
         function moveToTrash(id) {
             let diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
             let trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
@@ -615,7 +709,6 @@
             const targetIndex = diaries.findIndex(item => item.id === id);
             if (targetIndex === -1) return;
 
-            // 從主陣列切出，推入回收桶
             const [removed] = diaries.splice(targetIndex, 1);
             trash.unshift(removed);
 
@@ -626,7 +719,6 @@
             updateTrashCount();
         }
 
-        // 核心邏輯：還原日記
         function restoreDiary(id) {
             let diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
             let trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
@@ -643,10 +735,9 @@
 
             loadDiaries();
             updateTrashCount();
-            openTrashModal(); // 刷新回收桶內部畫面
+            openTrashModal(); 
         }
 
-        // 核心邏輯：永久刪除
         function deletePermanently(id) {
             if (confirm('This will delete the entry forever. Are you sure?')) {
                 let trash = JSON.parse(localStorage.getItem('myDiariesTrash')) || [];
@@ -658,7 +749,6 @@
             }
         }
 
-        // 匯出 Excel
         function exportToExcel() {
             const diaries = JSON.parse(localStorage.getItem('myDiaries')) || [];
             if (diaries.length === 0) return;
