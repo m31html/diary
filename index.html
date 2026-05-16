@@ -27,13 +27,14 @@
         body {
             font-family: 'Helvetica Neue', Helvetica, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
             background-color: var(--bg-color);
-            color: var(--primary-text);
             margin: 0;
             padding: 20px 14px 80px 14px; 
             display: flex;
             justify-content: center;
             -webkit-font-smoothing: antialiased;
             overscroll-behavior-x: none; 
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
         @media (min-width: 768px) {
@@ -43,6 +44,8 @@
         .container {
             width: 100%;
             max-width: 760px;
+            display: flex;
+            flex-direction: column;
         }
 
         header {
@@ -176,23 +179,32 @@
             .fab { right: 40px; bottom: 40px; width: 64px; height: 64px; font-size: 32px; }
         }
 
-        /* 日記列表排版與滑動動畫 */
+        /* 🌟 分隔線以下整個可左右滑動的互動核心區塊 */
+        .main-swipe-area {
+            flex-grow: 1;
+            min-height: 400px; /* 確保沒日記時也有足夠的滑動範圍 */
+            display: flex;
+            flex-direction: column;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .main-swipe-area:active {
+            cursor: grabbing;
+        }
+        .main-swipe-area.fade-out {
+            opacity: 0;
+        }
+
+        /* 日記列表排版 */
         .diary-list {
             display: flex;
             flex-direction: column;
             gap: 16px;
-            transition: opacity 0.2s ease, transform 0.2s ease;
-            opacity: 1;
-            transform: translateX(0);
-            /* 電腦版加上游標暗示可以拖拽 */
-            cursor: grab;
-        }
-        .diary-list:active {
-            cursor: grabbing;
-        }
-        
-        .diary-list.fade-out {
-            opacity: 0;
+            width: 100%;
         }
 
         .diary-item {
@@ -203,8 +215,6 @@
             flex-direction: row; 
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            user-select: none;
-            -webkit-user-select: none;
         }
         .diary-item:hover {
             border-color: var(--border-color);
@@ -223,6 +233,7 @@
             justify-content: flex-start;
             flex-shrink: 0;
             box-sizing: border-box;
+            cursor: pointer;
         }
         @media (min-width: 576px) {
             .diary-left { width: 100px; padding: 30px 10px; }
@@ -245,6 +256,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            cursor: pointer;
         }
         @media (min-width: 576px) {
             .diary-right { padding: 25px 30px; }
@@ -390,10 +402,10 @@
             color: var(--hint-text);
             font-size: 13px;
             letter-spacing: 1px;
-            padding: 50px 20px;
-            background: var(--card-color);
-            border-radius: var(--radius-large);
+            padding: 60px 20px;
             text-transform: uppercase;
+            width: 100%;
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -426,8 +438,11 @@
             </div>
         </div>
 
-        <!-- 日記列表 -->
-        <div id="diaryList" class="diary-list"></div>
+        <!-- 🌟 分隔線以下的完整滑動感應區 -->
+        <div id="mainSwipeArea" class="main-swipe-area">
+            <!-- 日記列表將被動態渲染至此 -->
+            <div id="diaryList" class="diary-list"></div>
+        </div>
     </div>
 
     <!-- 右下角固定的新增懸浮按鈕 -->
@@ -501,7 +516,7 @@
         let dragStartX = 0;
         let dragStartY = 0;
         let isMouseDown = false;
-        let hasDragged = false; // 用於區分「點擊卡片」與「拖拽換月」
+        let hasDragged = false; 
 
         document.addEventListener('DOMContentLoaded', () => {
             initYearFilter();
@@ -525,17 +540,17 @@
             yearSelect.value = currentYear;
         }
 
-        // 🌟 同時綁定手機觸控 (Touch) 與電腦滑鼠 (Mouse) 左右拖拽事件
+        // 🌟 將滑動事件綁定在涵蓋整個下半部的外層大容器 (#mainSwipeArea) 上
         function setupDragGestures() {
-            const listContainer = document.getElementById('diaryList');
+            const swipeArea = document.getElementById('mainSwipeArea');
 
             // --- 手機觸控事件 ---
-            listContainer.addEventListener('touchstart', (e) => {
+            swipeArea.addEventListener('touchstart', (e) => {
                 dragStartX = e.touches[0].clientX;
                 dragStartY = e.touches[0].clientY;
             }, { passive: true });
 
-            listContainer.addEventListener('touchend', (e) => {
+            swipeArea.addEventListener('touchend', (e) => {
                 const endX = e.changedTouches[0].clientX;
                 const endY = e.changedTouches[0].clientY;
                 handleDragEnd(endX, endY);
@@ -543,8 +558,8 @@
 
 
             // --- 電腦滑鼠事件 ---
-            listContainer.addEventListener('mousedown', (e) => {
-                // 排除點擊到按鈕或其他表單元件
+            swipeArea.addEventListener('mousedown', (e) => {
+                // 排除點擊到按鈕或其他互動元件
                 if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') return;
                 isMouseDown = true;
                 hasDragged = false;
@@ -554,7 +569,7 @@
 
             window.addEventListener('mousemove', (e) => {
                 if (!isMouseDown) return;
-                // 如果移動距離超過 10px，判定為正在拖拽，防止觸發點擊開啟卡片
+                // 如果滑鼠水平移動超過 10px，就標記為「正在拖拽」，可防止放開時誤當成「點擊」打開日記卡片
                 if (Math.abs(e.clientX - dragStartX) > 10) {
                     hasDragged = true;
                 }
@@ -569,11 +584,12 @@
             });
         }
 
-        // 處理拖拽結束後的判定邏輯
+        // 處理拖拽結束後的翻月判定邏輯
         function handleDragEnd(endX, endY) {
             const deltaX = endX - dragStartX;
             const deltaY = endY - dragStartY;
 
+            // 水平滑動大於 60px 且水平位移大於垂直位移，判定為翻月
             if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
                 if (deltaX > 0) {
                     changeMonthOffset(-1); // 👈 向右拖：看上一個月
@@ -603,15 +619,15 @@
             const yearExists = Array.from(yearSelect.options).some(opt => opt.value == currentYear);
             if (!yearExists && yearSelect.value !== 'all') return;
 
-            const listContainer = document.getElementById('diaryList');
-            listContainer.classList.add('fade-out');
+            const swipeArea = document.getElementById('mainSwipeArea');
+            swipeArea.classList.add('fade-out');
 
             setTimeout(() => {
                 if (yearSelect.value !== 'all') yearSelect.value = currentYear;
                 monthSelect.value = currentMonth.toString().padStart(2, '0');
 
                 loadDiaries();
-                listContainer.classList.remove('fade-out');
+                swipeArea.classList.remove('fade-out');
             }, 150);
         }
 
@@ -658,7 +674,7 @@
             });
 
             if (filteredDiaries.length === 0) {
-                diaryListContainer.innerHTML = '<div class="no-data" style="min-height: 200px; display: flex; align-items: center; justify-content: center;">暫無日記。</div>';
+                diaryListContainer.innerHTML = '<div class="no-data">暫無日記。</div>';
                 return;
             }
 
